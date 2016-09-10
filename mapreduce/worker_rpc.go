@@ -49,6 +49,7 @@ func (worker *Worker) RunReduce(args *RunArgs, _ *struct{}) error {
 		if file, err = os.Create(resultFileName(args.Id)); err != nil {
 			log.Fatal(err)
 		}
+		file.Sync()
 		file.Close()
 		panic("Induced failure.")
 	}

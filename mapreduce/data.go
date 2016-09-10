@@ -50,6 +50,7 @@ func storeLocal(task *Task, idMapTask int, data []KeyValue) {
 				}
 			}
 		}
+		file.Sync()
 		file.Close()
 	}
 }
