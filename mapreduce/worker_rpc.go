@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"time"
 )
 
 // RPC - RunMap
@@ -19,6 +20,8 @@ func (worker *Worker) RunMap(args *RunArgs, _ *struct{}) error {
 	if worker.shouldFail(false) {
 		mapResult = make([]KeyValue, 0)
 		storeLocal(worker.task, args.Id, mapResult)
+		// Allow descriptors to be closed.
+		time.Sleep(time.Duration(100) * time.Millisecond)
 		panic("Induced failure.")
 	}
 
@@ -51,6 +54,8 @@ func (worker *Worker) RunReduce(args *RunArgs, _ *struct{}) error {
 		}
 		file.Sync()
 		file.Close()
+		// Allow descriptors to be closed.
+		time.Sleep(time.Duration(100) * time.Millisecond)
 		panic("Induced failure.")
 	}
 
