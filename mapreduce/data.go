@@ -6,11 +6,14 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 const (
 	REDUCE_PATH = "reduce/"
 	RESULT_PATH = "result/"
+
+	OPEN_FILE_MAX_RETRY = 3
 )
 
 // Returns the name of files created after merge
@@ -107,10 +110,17 @@ func mergeReduceLocal(reduceCounter int) {
 	mergeFileEncoder = json.NewEncoder(mergeFile)
 
 	for r := 0; r < reduceCounter; r++ {
-		if file, err = os.Open(resultFileName(r)); err != nil {
-			log.Fatal(err)
+		for i := 0; i < OPEN_FILE_MAX_RETRY; i++ {
+			if file, err = os.Open(resultFileName(r)); err == nil {
+				break
+			}
+			log.Printf("(%v/%v) Failed to open file %v. Retrying in 1 second...", i+1, OPEN_FILE_MAX_RETRY, resultFileName(r))
+			time.Sleep(time.Second)
 		}
 
+		if err != nil {
+			log.Fatal(err)
+		}
 		fileDecoder = json.NewDecoder(file)
 
 		for {

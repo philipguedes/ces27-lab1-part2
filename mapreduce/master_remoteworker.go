@@ -1,6 +1,8 @@
 package mapreduce
 
 import (
+	"io"
+	"log"
 	"net/rpc"
 )
 
@@ -35,7 +37,9 @@ func (worker *RemoteWorker) callRemoteWorker(proc string, args interface{}, repl
 
 	err = client.Call(proc, args, reply)
 
-	if err != nil {
+	if err == io.ErrUnexpectedEOF {
+		log.Printf("Ignoring unexpected EOF error.")
+	} else if err != nil {
 		return err
 	}
 
