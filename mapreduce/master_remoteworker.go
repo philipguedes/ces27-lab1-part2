@@ -38,7 +38,8 @@ func (worker *RemoteWorker) callRemoteWorker(proc string, args interface{}, repl
 	err = client.Call(proc, args, reply)
 
 	if err == io.ErrUnexpectedEOF {
-		log.Printf("Ignoring unexpected EOF error.")
+		// Ignore Unexpected EOF error
+		return nil
 	} else if err != nil {
 		return err
 	}
