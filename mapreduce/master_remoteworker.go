@@ -2,7 +2,6 @@ package mapreduce
 
 import (
 	"io"
-	"log"
 	"net/rpc"
 )
 
