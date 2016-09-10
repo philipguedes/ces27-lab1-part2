@@ -3,6 +3,7 @@ package mapreduce
 import (
 	"io"
 	"net/rpc"
+	"time"
 )
 
 type workerStatus string
@@ -37,8 +38,16 @@ func (worker *RemoteWorker) callRemoteWorker(proc string, args interface{}, repl
 	err = client.Call(proc, args, reply)
 
 	if err == io.ErrUnexpectedEOF {
-		// Ignore Unexpected EOF error
-		return nil
+		time.Sleep(time.Second)
+		var tmpClient *rpc.Client
+		tmpClient, err = rpc.Dial("tcp", worker.hostname)
+
+		if err == nil {
+			// Ignore Unexpected EOF error
+			tmpClient.Close()
+			return nil
+		}
+		return err
 	} else if err != nil {
 		return err
 	}
