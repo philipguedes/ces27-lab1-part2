@@ -100,9 +100,11 @@ func mergeMapLocal(task *Task, mapCounter int) {
 
 				mergeFileEncoder.Encode(&kv)
 			}
+			file.Sync()
 			file.Close()
 		}
 
+		mergeFile.Sync()
 		mergeFile.Close()
 	}
 }
@@ -116,9 +118,13 @@ func mergeReduceLocal(reduceCounter int) {
 		mergeFile        *os.File
 		mergeFileEncoder *json.Encoder
 	)
+
 	if mergeFile, err = os.Create(filepath.Join(RESULT_PATH, "result-final.txt")); err != nil {
 		log.Fatal(err)
 	}
+
+	defer mergeFile.Sync()
+	defer mergeFile.Close()
 
 	mergeFileEncoder = json.NewEncoder(mergeFile)
 
@@ -146,6 +152,7 @@ func mergeReduceLocal(reduceCounter int) {
 
 			mergeFileEncoder.Encode(&kv)
 		}
+		file.Sync()
 		file.Close()
 	}
 }
