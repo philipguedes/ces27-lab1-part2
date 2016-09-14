@@ -33,6 +33,8 @@ type Master struct {
 	// ADD EXTRA PROPERTIES HERE //
 	///////////////////////////////
 	// Fault Tolerance
+	failedOperationChan chan *Operation
+	repeatOperation int
 }
 
 type Operation struct {
@@ -48,6 +50,11 @@ func newMaster(address string) (master *Master) {
 	master.workers = make(map[int]*RemoteWorker, 0)
 	master.idleWorkerChan = make(chan *RemoteWorker, IDLE_WORKER_BUFFER)
 	master.failedWorkerChan = make(chan *RemoteWorker, IDLE_WORKER_BUFFER)
+
+	// add
+	master.failedOperationChan = make(chan *Operation, RETRY_OPERATION_BUFFER)
+	master.repeatOperation = 0
+
 	master.totalWorkers = 0
 	return
 }
@@ -80,6 +87,26 @@ func (master *Master) handleFailingWorkers() {
 	/////////////////////////
 	// YOUR CODE GOES HERE //
 	/////////////////////////
+	
+
+	for elem := range master.failedWorkerChan {
+		// Protegendo o acesso à estrutura para 
+		// garantir a sincronia 
+		master.workersMutex.Lock()
+		
+		// Deletando o worker que falhou
+		delete(master.workers, elem.id)
+
+		// Informando que deletou o worker que falhou
+		log.Println("Handling Failing Worker... id: ", elem.id)
+
+		// Permitindo novamente o acesso
+		master.workersMutex.Unlock()
+	}
+
+	
+	
+
 }
 
 // Handle a single connection until it's done, then closes it.

@@ -26,15 +26,28 @@ func (master *Master) schedule(task *Task, proc string, filePathChan chan string
 	for filePath = range filePathChan {
 		operation = &Operation{proc, counter, filePath}
 		counter++
-
 		worker = <-master.idleWorkerChan
 		wg.Add(1)
 		go master.runOperation(worker, operation, &wg)
 	}
+	wg.Wait()
 
+	// ADD
+	for i := 0; i < master.repeatOperation; i++ {
+		operation = <-master.failedOperationChan
+		worker = <-master.idleWorkerChan
+		wg.Add(1)
+		go master.runOperation(worker, operation, &wg)
+		if i+1 == master.repeatOperation {
+			wg.Wait()
+		}
+	}
+	
+	// RETORNA AO WAIT ASSIM QUE SAIR DE OPERATION
 	wg.Wait()
 
 	log.Printf("%vx %v operations completed\n", counter, proc)
+	master.repeatOperation = 0
 	return counter
 }
 
@@ -56,8 +69,17 @@ func (master *Master) runOperation(remoteWorker *RemoteWorker, operation *Operat
 
 	if err != nil {
 		log.Printf("Operation %v '%v' Failed. Error: %v\n", operation.proc, operation.id, err)
+		// Precisa passar essa operação para outro worker, ou seja, fazer com que ela volte pra fila
+		
+		master.repeatOperation++
+		master.failedOperationChan <- operation
+
 		wg.Done()
+
+		
 		master.failedWorkerChan <- remoteWorker
+
+
 	} else {
 		wg.Done()
 		master.idleWorkerChan <- remoteWorker
